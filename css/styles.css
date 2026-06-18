@@ -1,0 +1,5 @@
+/* MTCS styles.css */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #f8fafc; color: #1e293b; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+.main-container { width: 100%; min-height: 100vh; padding: 20px 24px; }
+.site-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; }
