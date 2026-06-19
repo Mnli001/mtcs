@@ -2,18 +2,18 @@
 <html lang="mn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MTCS — Арилжааны Тооцоолуур</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <div class="main-container">
-        <header class="site-header">
-            <div class="header-brand">
-                <div class="brand-icon">M</div>
-                <h1 class="site-title">MTCS</h1>
-            </div>
-        </header>
+        <header class="site-header"><h1 class="site-title">MTCS</h1></header>
+        <form id="calcForm">
+            <input type="number" id="accountBalance" value="10000">
+            <select id="leverage"><option value="100">1:100</option></select>
+            <input type="number" id="riskValue" value="1">
+            <input type="number" id="stopLoss" value="20">
+        </form>
     </div>
 </body>
 </html>
