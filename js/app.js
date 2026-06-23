@@ -62,4 +62,46 @@ function initNavigation() {
     navItems.forEach(function(item) {
         item.addEventListener('click', function(e) {
             e.preventDefault();
-            if (item.dataset.tar
+            if (item.dataset.target) {
+                window.switchTab(item.dataset.target);
+            }
+        });
+    });
+}
+
+// ==========================================================================
+// 2. АРИЛЖААНЫ ХЭРЭГСЛҮҮДИЙН СТАНДАРТ ӨГӨГДӨЛ
+// ==========================================================================
+const INSTRUMENTS = {
+    'XAUUSD': {
+        name: 'XAUUSD',
+        contractSize: 100,
+        defaultPrice: 2500.00,
+        pipSize: 0.10,
+        unitText: ''
+    },
+    'EURUSD': {
+        name: 'EURUSD',
+        contractSize: 100000,
+        defaultPrice: 1.0850,
+        pipSize: 0.0001,
+        unitText: ''
+    },
+    'GBPUSD': {
+        name: 'GBPUSD',
+        contractSize: 100000,
+        defaultPrice: 1.2850,
+        pipSize: 0.0001,
+        unitText: ''
+    },
+    'US30': {
+        name: 'US30',
+        contractSize: 1,
+        defaultPrice: 40000.00,
+        pipSize: 1.0,
+        unitText: ''
+    },
+    'BTCUSD': {
+        name: 'BTCUSD',
+        contractSize: 1,
+        defau
