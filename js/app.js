@@ -104,4 +104,42 @@ const INSTRUMENTS = {
     'BTCUSD': {
         name: 'BTCUSD',
         contractSize: 1,
-        defau
+        defaultPrice: 60000.00,
+        pipSize: 1.0,
+        unitText: ''
+    }
+};
+
+// ==========================================================================
+// 3. ТООЦООЛУУРЫН СИСТЕМ (Форм утга өөрчлөгдөх үед бодох)
+// ==========================================================================
+function initCalculator() {
+    const calcForm = document.getElementById('calcForm');
+    if (!calcForm) return;
+
+    // Форм дээрх бүх input, select дээр өөрчлөлт орох үед тооцоолох
+    const inputs = calcForm.querySelectorAll('input, select');
+    inputs.forEach(function(input) {
+        input.addEventListener('input', calculateLotSize);
+        input.addEventListener('change', calculateLotSize);
+    });
+
+    // BUY болон SELL радио товч дээр дарах үед
+    const dirRadios = document.querySelectorAll('input[name="direction"]');
+    dirRadios.forEach(function(radio) {
+        radio.addEventListener('change', calculateLotSize);
+    });
+
+    // Хадгалах товч дарахад ажиллах
+    const btnSave = document.getElementById('btnLogTrade');
+    if (btnSave) {
+        btnSave.addEventListener('click', logTradeToJournal);
+    }
+
+    // Эхний ачаалалтаар анхны утгуудыг бодож харуулах
+    calculateLotSize();
+}
+
+// Үндсэн лот ба эрсдэл бодох томьёо
+function calculateLotSize() {
+    // 1. Оролтын талбаруудаас утгу
