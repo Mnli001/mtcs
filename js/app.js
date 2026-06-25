@@ -142,4 +142,28 @@ function initCalculator() {
 
 // Үндсэн лот ба эрсдэл бодох томьёо
 function calculateLotSize() {
-    // 1. Оролтын талбаруудаас утгу
+    // 1. Оролтын талбаруудаас утгуудыг тоон хэлбэрээр авах
+    const balanceInput = document.getElementById('accountBalance');
+    const leverageInput = document.getElementById('leverage');
+    const riskTypeInput = document.getElementById('riskType');
+    const riskValueInput = document.getElementById('riskValue');
+    const instrumentInput = document.getElementById('instrument');
+    const stopLossInput = document.getElementById('stopLoss');
+    const entryPriceInput = document.getElementById('entryPrice');
+    const rrRatioInput = document.getElementById('rrRatio');
+
+    const bVal = parseFloat(balanceInput ? balanceInput.value : '');
+    const balance = !isNaN(bVal) && bVal > 0 ? bVal : 10000;
+
+    const levVal = parseFloat(leverageInput ? leverageInput.value : '');
+    const leverage = !isNaN(levVal) && levVal > 0 ? levVal : 100;
+
+    const riskType = riskTypeInput ? riskTypeInput.value : 'percent';
+
+    const rVal = parseFloat(riskValueInput ? riskValueInput.value : '');
+    const riskValue = !isNaN(rVal) && rVal >= 0.01 ? rVal : 1;
+
+    const instrumentKey = instrumentInput ? instrumentInput.value : 'XAUUSD';
+
+    const slVal = parseFloat(stopLossInput ? stopLossInput.value : '');
+    const stopLossPips = !i

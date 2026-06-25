@@ -140,4 +140,41 @@ body {
     font-size: 12px;
     font-weight: 600;
     text-decoration: none;
-    c
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.15s ease;
+}
+
+.btn-login-mini:hover, .btn-logout-icon:hover {
+    background: #334155;
+}
+
+/* 4. ДЭЭД ХЭВТЭЭ ЦЭС (Tab Menu) */
+.tab-menu {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.nav-item {
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.nav-item:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+
+.nav-item.active {
