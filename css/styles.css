@@ -178,3 +178,42 @@ body {
 }
 
 .nav-item.active {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+}
+
+/* 5. ХУУДАС БҮРИЙН ХЭСЭГ (View Sections) */
+.view-section {
+    display: block;
+}
+
+.view-section.hidden {
+    display: none !important;
+}
+
+.section-header-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+}
+
+.box-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* 6. ТООЦООЛУУРЫН БҮТЭЦ (Calculator Grid) */
+.calc-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: stretch;
+}
+
+.calc-form-box, .calc-result-box {
+    border: 1px s

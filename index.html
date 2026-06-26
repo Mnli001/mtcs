@@ -2,18 +2,299 @@
 <html lang="mn">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MTCS — Арилжааны Тооцоолуур</title>
-    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Chart.js & Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- CSS (Стандарт загвар) -->
+    <link rel="stylesheet" href="css/styles.css?v=103">
+    
+    <!-- Хэрэглэгч нэвтэрсэн эсэхийг шалгах -->
+    <script>
+        (function() {
+            var user = localStorage.getItem('mtcs_user');
+            var isGuest = sessionStorage.getItem('mtcs_guest');
+            var hasSession = user || isGuest;
+
+            for (var key in localStorage) {
+                if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+                    hasSession = true;
+                    break;
+                }
+            }
+
+            if (!hasSession) {
+                window.location.replace('login.html');
+            }
+        })();
+    </script>
+    
+    <!-- Таб шилжих скрипт -->
+    <script>
+        function switchTab(targetName) {
+            var navItems = document.querySelectorAll('.nav-item');
+            var sections = document.querySelectorAll('.view-section');
+
+            navItems.forEach(function(nav) {
+                if (nav.dataset.target === targetName) {
+                    nav.classList.add('active');
+                } else {
+                    nav.classList.remove('active');
+                }
+            });
+
+            sections.forEach(function(sec) {
+                if (sec.id === 'view-' + targetName) {
+                    sec.classList.remove('hidden');
+                    sec.style.display = 'block';
+                } else {
+                    sec.classList.add('hidden');
+                    sec.style.display = 'none';
+                }
+            });
+
+            if (targetName === 'analytics' && window.renderEquityChart) {
+                setTimeout(window.renderEquityChart, 60);
+            }
+            if (targetName === 'leaderboard' && window.updateAnalytics) {
+                window.updateAnalytics();
+            }
+        }
+
+        window.addEventListener('hashchange', function() {
+            var hash = window.location.hash.replace('#', '');
+            if (hash === 'journal' || hash === 'analytics' || hash === 'calculator' || hash === 'leaderboard' || hash === 'zereglel') {
+                switchTab(hash);
+            }
+        });
+    </script>
 </head>
 <body>
     <div class="main-container">
-        <header class="site-header"><h1 class="site-title">MTCS</h1></header>
-        <form id="calcForm">
-            <input type="number" id="accountBalance" value="10000">
-            <select id="leverage"><option value="100">1:100</option></select>
-            <input type="number" id="riskValue" value="1">
-            <input type="number" id="stopLoss" value="20">
-        </form>
+        <!-- 1. Толгой хэсэг (Header) -->
+        <header class="site-header">
+            <div class="header-brand">
+                <div class="brand-icon">M</div>
+                <div>
+                    <h1 class="site-title">MTCS</h1>
+                </div>
+            </div>
+            
+            <div class="user-profile">
+                <div class="avatar">M</div>
+                <div class="user-details">
+                    <span class="user-name">Зочин</span>
+                    <span class="user-rank badge badge-bronze" id="headerUserRank" onclick="switchTab('zereglel')" title="Зэрэглэл харах">Хүрэл</span>
+                </div>
+                <a href="login.html" class="btn-login-mini">Нэвтрэх</a>
+            </div>
+        </header>
+
+        <!-- 2. Дээд хэвтээ цэс (Horizontal Tab Navigation) -->
+        <nav class="tab-menu">
+            <button type="button" class="nav-item active" data-target="calculator" onclick="switchTab('calculator')">
+                Тооцоолуур
+            </button>
+            <button type="button" class="nav-item" data-target="journal" onclick="switchTab('journal')">
+                Тэмдэглэл
+            </button>
+            <button type="button" class="nav-item" data-target="leaderboard" onclick="switchTab('leaderboard')">
+                Чансаа
+            </button>
+            <button type="button" class="nav-item" data-target="analytics" onclick="switchTab('analytics')">
+                Анализ
+            </button>
+            <button type="button" class="nav-item" data-target="zereglel" onclick="switchTab('zereglel')">
+                Зэрэглэл
+            </button>
+        </nav>
+
+        <!-- Toast мэдэгдэл -->
+        <div id="toastNotification" class="toast hidden">Хуулагдлаа</div>
+
+        <!-- 3. ТООЦООЛУУР (Calculator Tab) -->
+        <section id="view-calculator" class="view-section active">
+            <div class="calc-layout">
+                <!-- Зүүн тал: Форм -->
+                <div class="calc-form-box">
+                    <h3 class="box-title">Үзүүлэлт</h3>
+                    <form id="calcForm" onsubmit="return false;">
+                        <!-- Арилжааны чиглэл -->
+                        <div class="form-group">
+                            <label class="form-label">Чиглэл:</label>
+                            <div class="direction-toggle">
+                                <label class="dir-radio-label">
+                                    <input type="radio" name="direction" id="dirBuy" value="BUY" checked>
+                                    <span class="radio-text">BUY</span>
+                                </label>
+                                <label class="dir-radio-label">
+                                    <input type="radio" name="direction" id="dirSell" value="SELL">
+                                    <span class="radio-text">SELL</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Дансны хэмжээ ба Хөшүүрэг -->
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label for="accountBalance" class="form-label">Данс ($):</label>
+                                <input type="number" id="accountBalance" class="form-input" value="10000" min="1" step="10" required>
+                            </div>
+                            <div class="form-col">
+                                <label for="leverage" class="form-label">Хөшүүрэг:</label>
+                                <select id="leverage" class="form-input">
+                                    <option value="1000">1 : 1000</option>
+                                    <option value="888">1 : 888</option>
+                                    <option value="500">1 : 500</option>
+                                    <option value="200">1 : 200</option>
+                                    <option value="100" selected>1 : 100</option>
+                                    <option value="50">1 : 50</option>
+                                    <option value="30">1 : 30</option>
+                                    <option value="20">1 : 20</option>
+                                    <option value="1">1 : 1</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Эрсдэл ба Stop Loss -->
+                        <div class="form-row">
+                            <div class="form-col">
+                                <div class="label-with-badge">
+                                    <label for="riskValue" class="form-label">Эрсдэл (%):</label>
+                                    <span id="riskMeterBadge" class="risk-badge badge-safe">1.0%</span>
+                                </div>
+                                <input type="number" id="riskValue" class="form-input" value="1" min="0.1" max="100" step="0.1" required>
+                                <div class="risk-bar-container">
+                                    <div id="riskBarFill" class="risk-bar-fill safe" style="width: 20%;"></div>
+                                </div>
+                            </div>
+                            <div class="form-col">
+                                <label for="stopLoss" class="form-label">Stop Loss (pip):</label>
+                                <input type="number" id="stopLoss" class="form-input" value="20" min="0.1" step="0.1" required>
+                            </div>
+                        </div>
+
+                        <!-- Хэрэгсэл ба Орох үнэ -->
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label for="instrument" class="form-label">Хос:</label>
+                                <select id="instrument" class="form-input">
+                                    <option value="XAUUSD" selected>XAUUSD</option>
+                                    <option value="EURUSD">EURUSD</option>
+                                    <option value="GBPUSD">GBPUSD</option>
+                                    <option value="US30">US30</option>
+                                    <option value="BTCUSD">BTCUSD</option>
+                                </select>
+                            </div>
+                            <div class="form-col">
+                                <label for="entryPrice" class="form-label">Орох үнэ:</label>
+                                <input type="number" id="entryPrice" class="form-input" placeholder="2500.00" step="0.01">
+                            </div>
+                        </div>
+
+                        <!-- R:R Харьцаа (Risk to Reward) -->
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label for="rrRatio" class="form-label">R:R:</label>
+                                <select id="rrRatio" class="form-input">
+                                    <option value="1">1 : 1.0</option>
+                                    <option value="1.5">1 : 1.5</option>
+                                    <option value="2" selected>1 : 2.0</option>
+                                    <option value="2.5">1 : 2.5</option>
+                                    <option value="3">1 : 3.0</option>
+                                    <option value="4">1 : 4.0</option>
+                                    <option value="5">1 : 5.0</option>
+                                </select>
+                            </div>
+                            <div class="form-col">
+                                <label class="form-label">R:R:</label>
+                                <div class="preset-buttons">
+                                    <button type="button" class="preset-btn btn-rr-chip" data-rr="1" onclick="setRR(1)">1:1</button>
+                                    <button type="button" class="preset-btn btn-rr-chip" data-rr="1.5" onclick="setRR(1.5)">1:1.5</button>
+                                    <button type="button" class="preset-btn btn-rr-chip active" data-rr="2" onclick="setRR(2)">1:2</button>
+                                    <button type="button" class="preset-btn btn-rr-chip" data-rr="3" onclick="setRR(3)">1:3</button>
+                                    <button type="button" class="preset-btn btn-rr-chip" data-rr="4" onclick="setRR(4)">1:4</button>
+                                    <button type="button" class="preset-btn btn-rr-chip" data-rr="5" onclick="setRR(5)">1:5</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Түргэн сонголтын товчлуурууд -->
+                        <div class="form-group">
+                            <label class="form-label">Сонгох:</label>
+                            <div class="preset-buttons">
+                                <button type="button" class="preset-btn" onclick="fillMarketPreset('XAUUSD', 2500.00, 25)">XAU</button>
+                                <button type="button" class="preset-btn" onclick="fillMarketPreset('EURUSD', 1.0850, 20)">EUR</button>
+                                <button type="button" class="preset-btn" onclick="fillMarketPreset('GBPUSD', 1.2850, 25)">GBP</button>
+                                <button type="button" class="preset-btn" onclick="fillMarketPreset('US30', 40000, 50)">US30</button>
+                                <button type="button" class="preset-btn" onclick="fillMarketPreset('BTCUSD', 60000, 100)">BTC</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Баруун тал: Үр дүнгийн карт -->
+                <div class="calc-result-box">
+                    <h3 class="box-title">Үр дүн</h3>
+                    
+                    <!-- Үндсэн Лот харуулах хэсэг -->
+                    <div class="lot-display-card">
+                        <div class="lot-title">Лот:</div>
+                        <div class="lot-number">
+                            <span id="calcLotSize">0.50</span>
+                            <span id="lotUnitText" class="lot-unit"></span>
+                        </div>
+                        <button type="button" class="btn-copy" onclick="copyLotSize()">
+                            Хуулах
+                        </button>
+                    </div>
+
+                    <!-- Үр дүнгийн дэлгэрэнгүй хүснэгт -->
+                    <table class="result-table">
+                        <tbody>
+                            <tr>
+                                <td>Эрсдэл ($):</td>
+                                <td><strong id="calcRiskAmount" class="text-risk">-$100.00</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Зорилтот ашиг ($):</td>
+                                <td><strong id="calcTargetProfit" class="text-profit">+$200.00</strong></td>
+                            </tr>
+                            <tr>
+                                <td>R:R:</td>
+                                <td><strong id="calcRRDisplay">1 : 2.0</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Барьцаа:</td>
+                                <td><strong id="calcMargin">$1,250.00</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Пипийн үнэ:</td>
+                                <td><strong id="calcPipValue">$5.00</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Stop Loss:</td>
+                                <td><strong id="calcSlPrice">--</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Take Profit:</td>
+                                <td><strong id="calcTpPrice">--</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Хадгалах товч -->
+                    <button type="button" class="btn-primary-block" id="btnLogTrade">
+                        Тэмдэглэлд хадгалах
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        
     </div>
 </body>
 </html>

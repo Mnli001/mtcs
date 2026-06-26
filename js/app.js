@@ -166,4 +166,46 @@ function calculateLotSize() {
     const instrumentKey = instrumentInput ? instrumentInput.value : 'XAUUSD';
 
     const slVal = parseFloat(stopLossInput ? stopLossInput.value : '');
-    const stopLossPips = !i
+    const stopLossPips = !isNaN(slVal) && slVal > 0 ? slVal : 20;
+
+    const epVal = parseFloat(entryPriceInput ? entryPriceInput.value : '');
+    const entryPrice = !isNaN(epVal) && epVal > 0 ? epVal : 0;
+
+    const rrVal = parseFloat(rrRatioInput ? rrRatioInput.value : '');
+    const rrRatio = !isNaN(rrVal) && rrVal > 0 ? rrVal : 2;
+
+    // Арилжааны чиглэл (BUY эсвэл SELL)
+    const dirChecked = document.querySelector('input[name="direction"]:checked');
+    const direction = dirChecked ? dirChecked.value : 'BUY';
+
+    // Хэрэгслийн үзүүлэлт
+    const spec = INSTRUMENTS[instrumentKey] || INSTRUMENTS['XAUUSD'];
+
+    // 2. Эрсдэлийн хэмжээг доллар ($) ба хувиар бодох
+    let riskUSD = 0;
+    let riskPercent = 1;
+
+    if (riskType === 'percent') {
+        riskPercent = riskValue;
+        riskUSD = balance * (riskValue / 100);
+    } else {
+        riskUSD = riskValue;
+        riskPercent = balance > 0 ? (riskValue / balance) * 100 : 1;
+    }
+
+    // Эрсдэлийн үзүүлэлтийг шинэчлэх
+    updateRiskMeter(riskPercent);
+
+    // 3. Stop Loss-ийн доллар дахь зай = SL pips * 1 пипийн үнийн хэмжээ
+    let slDistanceUSD = stopLossPips * spec.pipSize;
+    if (slDistanceUSD <= 0) {
+        slDistanceUSD = 0.01;
+    }
+
+    // 4. Үндсэн Лот бодох томьёо:
+    // Лот = Эрсдэх Мөнгө / (SL зай * Гэрээний хэмжээ)
+    let lotSize = riskUSD / (slDistanceUSD * spec.contractSize);
+    // Хамгийн багадаа 0.01 лот, 2 оронгоор нарийвчилна
+    lotSize = Math.max(0.01, Math.round(lotSize * 100) / 100);
+
+    // 5. Барьцаа хөрөнгө (Mar
