@@ -208,4 +208,69 @@ function calculateLotSize() {
     // Хамгийн багадаа 0.01 лот, 2 оронгоор нарийвчилна
     lotSize = Math.max(0.01, Math.round(lotSize * 100) / 100);
 
-    // 5. Барьцаа хөрөнгө (Mar
+    // 5. Барьцаа хөрөнгө (Margin) тооцоолох
+    const effectivePrice = entryPrice > 0 ? entryPrice : spec.defaultPrice;
+    const positionValue = lotSize * spec.contractSize * effectivePrice;
+    const marginUSD = positionValue / leverage;
+
+    // 6. 1 пип хөдлөхөд гарах үр дүн ($)
+    const pipValueUSD = spec.pipSize * spec.contractSize * lotSize;
+
+    // 7. Боломжит зорилтот ашиг (Target Profit)
+    const targetProfitUSD = riskUSD * rrRatio;
+
+    // 8. Stop Loss болон Take Profit үнэ бодох
+    let slPrice = 0;
+    let tpPrice = 0;
+    const tpDistanceUSD = slDistanceUSD * rrRatio;
+
+    if (direction === 'BUY') {
+        slPrice = effectivePrice - slDistanceUSD;
+        tpPrice = effectivePrice + tpDistanceUSD;
+    } else {
+        slPrice = effectivePrice + slDistanceUSD;
+        tpPrice = effectivePrice - tpDistanceUSD;
+    }
+
+    // Нарийвчлалыг тохируулах (Евро, Фунт бол 4 орон, бусад нь 2 орон)
+    const decimals = spec.pipSize < 0.01 ? 4 : 2;
+    const slText = entryPrice > 0 ? slPrice.toFixed(decimals) : '--';
+    const tpText = entryPrice > 0 ? tpPrice.toFixed(decimals) : '--';
+
+    // 9. Дэлгэцийн элементүүдийг шинэчлэх (DOM Update)
+    setElementText('calcLotSize', lotSize.toFixed(2));
+    setElementText('lotUnitText', '');
+    setElementText('calcRiskAmount', `-$${riskUSD.toFixed(2)}`);
+    setElementText('calcTargetProfit', `+$${targetProfitUSD.toFixed(2)}`);
+    setElementText('calcMargin', `$${marginUSD.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
+    setElementText('calcPipValue', `$${pipValueUSD.toFixed(2)}`);
+    setElementText('calcSlPrice', slText);
+    setElementText('calcTpPrice', tpText);
+    setElementText('calcRRDisplay', '1 : ' + parseFloat(rrRatio).toFixed(1));
+
+    // R:R түргэн сонголтын товчлуурыг идэвхжүүлэх
+    const rrChips = document.querySelectorAll('.btn-rr-chip');
+    rrChips.forEach(function(btn) {
+        if (parseFloat(btn.dataset.rr) === parseFloat(rrRatio)) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+// Текст солих энгийн туслах функц
+function setElementText(id, text) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.textContent = text;
+    }
+}
+
+// Эрсдэлийн түвшинг шалгах энгийн функц
+function updateRiskMeter(riskPct) {
+    const badge = document.getElementById('riskMeterBadge');
+    const bar = document.getElementById('riskBarFill');
+    if (!badge || !bar) return;
+
+    const fillWidth = Math.min(100, Mat
