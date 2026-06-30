@@ -273,4 +273,62 @@ function updateRiskMeter(riskPct) {
     const bar = document.getElementById('riskBarFill');
     if (!badge || !bar) return;
 
-    const fillWidth = Math.min(100, Mat
+    const fillWidth = Math.min(100, Math.max(10, (riskPct / 5) * 100));
+    bar.style.width = fillWidth + '%';
+
+    bar.className = 'risk-bar-fill';
+    badge.className = 'risk-badge';
+
+    if (riskPct <= 1.05) {
+        bar.classList.add('safe');
+        badge.classList.add('badge-safe');
+        badge.textContent = riskPct.toFixed(1) + '%';
+    } else if (riskPct <= 3.0) {
+        bar.classList.add('moderate');
+        badge.classList.add('badge-moderate');
+        badge.textContent = riskPct.toFixed(1) + '%';
+    } else {
+        bar.classList.add('danger');
+        badge.classList.add('badge-danger');
+        badge.textContent = riskPct.toFixed(1) + '%';
+    }
+}
+
+// ==========================================================================
+// 4. ТҮРГЭН СОНГОЛТЫН ТОВЧЛУУРУУД (Presets)
+// ==========================================================================
+function initPresets() {
+    window.fillMarketPreset = function(symbol, price, sl) {
+        const instEl = document.getElementById('instrument');
+        const entryEl = document.getElementById('entryPrice');
+        const slEl = document.getElementById('stopLoss');
+
+        if (instEl) instEl.value = symbol;
+        if (entryEl) entryEl.value = price;
+        if (slEl) slEl.value = sl;
+
+        calculateLotSize();
+        showToast(symbol);
+    };
+
+    window.setRR = function(val) {
+        const rrInput = document.getElementById('rrRatio');
+        if (rrInput) {
+            rrInput.value = val;
+        }
+        calculateLotSize();
+        showToast('1:' + val);
+    };
+}
+
+// ==========================================================================
+// 5. ЛОТ ХУУЛАХ ФУНКЦ (Copy to Clipboard)
+// ==========================================================================
+window.copyLotSize = function() {
+    const lotSizeEl = document.getElementById('calcLotSize');
+    const lotSize = lotSizeEl ? lotSizeEl.textContent : '0.01';
+
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(lotSize).then(function() {
+            showToast
+// End of June milestone
