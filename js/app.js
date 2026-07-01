@@ -385,4 +385,48 @@ function logTradeToJournal() {
     // Шинэ арилжааны өгөгдлийг үүсгэх
     const newTrade = {
         id: Date.now(),                               // Цагаар тодорхойлох давтагдашгүй дугаар
-        date: new Date().toLocaleDateString(
+        date: new Date().toLocaleDateString('mn-MN'), // Өнөөдрийн огноо
+        instrument: instrument,
+        direction: direction,
+        entryPrice: entryPrice,
+        lotSize: lotSize,
+        riskAmount: riskUSD,
+        targetProfit: targetProfitUSD,
+        pnl: 0,
+        status: 'OPEN'                                // Анхны төлөв: Нээлттэй
+    };
+
+    // Жагсаалтын эхэнд нэмэх
+    tradesArray.unshift(newTrade);
+
+    // Хадгалах ба дэлгэцийг шинэчлэх
+    saveTradesToStorage();
+    renderJournalTable();
+    updateAnalytics();
+
+    // Supabase онлайн бааз руу давхар синхрончлох (холбогдсон үед)
+    if (window.supabaseClient) {
+        window.supabaseClient.auth.getSession().then(function(res) {
+            const session = res.data ? res.data.session : null;
+            if (session && session.user) {
+                window.supabaseClient.from('trades').insert([{
+                    user_id: session.user.id,
+                    instrument: newTrade.instrument,
+                    direction: newTrade.direction,
+                    entry_price: parseFloat(newTrade.entryPrice) || null,
+                    lot_size: parseFloat(newTrade.lotSize),
+                    risk_amount: newTrade.riskAmount,
+                    target_profit: newTrade.targetProfit,
+                    status: 'OPEN',
+                    pnl: 0
+                }]).select().then(function(insertRes) {
+                    if (insertRes && insertRes.data && insertRes.data[0]) {
+                        const cloudTrade = insertRes.data[0];
+                        // Хэрэв сүлжээний хариу ирэх хооронд хэрэглэгч арилжааг хаасан бол Supabase-д шинэчлэх
+                        if (newTrade.status !== 'OPEN') {
+                            window.supabaseClient.from('trades').update({
+                                status: newTrade.status,
+                                pnl: newTrade.pnl
+                            }).eq('id', cloudTrade.id).then(function() {});
+                        }
+                        newTrade.id = cloudTrade.id;
