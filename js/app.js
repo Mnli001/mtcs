@@ -330,5 +330,59 @@ window.copyLotSize = function() {
 
     if (navigator.clipboard) {
         navigator.clipboard.writeText(lotSize).then(function() {
-            showToast
-// End of June milestone
+            showToast('Хуулагдлаа');
+        }).catch(function() {
+            fallbackCopy(lotSize);
+        });
+    } else {
+        fallbackCopy(lotSize);
+    }
+};
+
+function fallbackCopy(text) {
+    const temp = document.createElement('textarea');
+    temp.value = text;
+    document.body.appendChild(temp);
+    temp.select();
+    document.execCommand('copy');
+    document.body.removeChild(temp);
+    showToast('Хуулагдлаа');
+}
+
+// Энгийн мэдэгдэл харуулах туслах функц
+function showToast(msg) {
+    const toast = document.getElementById('toastNotification');
+    if (!toast) return;
+
+    toast.textContent = msg;
+    toast.classList.remove('hidden');
+    toast.style.opacity = '1';
+
+    setTimeout(function() {
+        toast.style.opacity = '0';
+        setTimeout(function() {
+            toast.classList.add('hidden');
+        }, 300);
+    }, 2000);
+}
+
+// ==========================================================================
+// 6. ТЭМДЭГЛЭЛД ХАДГАЛАХ БА УДИРДАХ (Trade Journal)
+// ==========================================================================
+function logTradeToJournal() {
+    const lotSize = document.getElementById('calcLotSize')?.textContent || '0.01';
+    const instrument = document.getElementById('instrument')?.value || 'XAUUSD';
+    const entryPrice = document.getElementById('entryPrice')?.value || '--';
+    const riskTxt = document.getElementById('calcRiskAmount')?.textContent || '-$100.00';
+    const profitTxt = document.getElementById('calcTargetProfit')?.textContent || '+$200.00';
+
+    const riskUSD = parseFloat(riskTxt.replace(/[^0-9.]/g, '')) || 100;
+    const targetProfitUSD = parseFloat(profitTxt.replace(/[^0-9.]/g, '')) || 200;
+
+    const dirRadio = document.querySelector('input[name="direction"]:checked');
+    const direction = dirRadio ? dirRadio.value : 'BUY';
+
+    // Шинэ арилжааны өгөгдлийг үүсгэх
+    const newTrade = {
+        id: Date.now(),                               // Цагаар тодорхойлох давтагдашгүй дугаар
+        date: new Date().toLocaleDateString(
