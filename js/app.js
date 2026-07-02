@@ -430,3 +430,64 @@ function logTradeToJournal() {
                             }).eq('id', cloudTrade.id).then(function() {});
                         }
                         newTrade.id = cloudTrade.id;
+                        saveTradesToStorage();
+                        renderJournalTable();
+                    }
+                }).catch(function(e) {
+                    console.warn('Trade insert warning:', e);
+                });
+            }
+        });
+    }
+
+    showToast('Хадгалагдлаа');
+}
+
+// Арилжааны үр дүнг Хожил (WIN) эсвэл Алдагдал (LOSS) болгон хаах
+window.closeTrade = function(id, outcome) {
+    const trade = tradesArray.find(function(t) { return t.id === id; });
+    if (!trade) return;
+
+    if (outcome === 'WIN') {
+        trade.status = 'WIN';
+        trade.pnl = trade.targetProfit;
+        showToast('WIN (+$' + trade.pnl.toFixed(2) + ')');
+    } else if (outcome === 'LOSS') {
+        trade.status = 'LOSS';
+        trade.pnl = -trade.riskAmount;
+        showToast('LOSS (-$' + Math.abs(trade.pnl).toFixed(2) + ')');
+    }
+
+    saveTradesToStorage();
+    renderJournalTable();
+    updateAnalytics();
+    renderEquityChart();
+
+    // Supabase онлайн баазад үр дүнг шинэчлэх (зөвхөн Supabase ID байгаа үед)
+    if (window.supabaseClient && typeof trade.id === 'string' && trade.id.includes('-')) {
+        window.supabaseClient.from('trades').update({
+            status: trade.status,
+            pnl: trade.pnl
+        }).eq('id', trade.id).then(function() {
+            console.log('Арилжааны төлөв Supabase-д шинэчлэгдлээ.');
+        }).catch(function(e) {
+            console.warn('Update trade error:', e);
+        });
+    }
+};
+
+// Тэмдэглэлийн бүх арилжааг цэвэрлэх
+window.clearAllTrades = function() {
+    if (confirm('Бүх тэмдэглэлийг цэвэрлэх үү?')) {
+        tradesArray = [];
+        window.tradesArray = tradesArray;
+        saveTradesToStorage();
+        renderJournalTable();
+        updateAnalytics();
+        renderEquityChart();
+        showToast('Цэвэрлэгдлээ');
+
+        if (window.supabaseClient) {
+            window.supabaseClient.auth.getSession().then(function(res) {
+                const session = res.data ? res.data.session : null;
+           
