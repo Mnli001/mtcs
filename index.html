@@ -357,6 +357,45 @@
             </div>
         </section>
 
+        <!-- 6. АНАЛИЗ (Analytics Tab) -->
+        <section id="view-analytics" class="view-section hidden">
+            <div class="section-header-box">
+                <h3 class="box-title">Анализ</h3>
+            </div>
+
+            <!-- Статистикийн 4 хайрцаг -->
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Win Rate</div>
+                    <div class="stat-val" id="statsWinRate">0%</div>
+                    <div class="stat-sub" id="statsWinCount">0W / 0L</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Ашиг / Алдагдал</div>
+                    <div class="stat-val" id="statsNetProfit">$0.00</div>
+                    <div class="stat-sub" id="statsRRRatio">R:R 1:2.0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Нийт арилжаа</div>
+                    <div class="stat-val" id="statsTotalTrades">0</div>
+                    <div class="stat-sub" id="statsActiveCount">0 Нээлттэй</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Profit Factor</div>
+                    <div class="stat-val" id="statsProfitFactor">1.00</div>
+                    <div class="stat-sub" id="statsBestPair">--</div>
+                </div>
+            </div>
+
+            <!-- Дансны график -->
+            <div class="chart-container-box">
+                <h4 class="chart-title">Дансны график</h4>
+                <div class="canvas-wrap">
+                    <canvas id="equityChartCanvas"></canvas>
+                </div>
+            </div>
+        </section>
+
         
     </div>
 </body>
