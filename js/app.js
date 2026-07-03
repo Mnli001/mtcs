@@ -557,4 +557,90 @@ function updateAnalytics() {
     const lossCount = losses.length;
 
     // Win Rate (Хожлын хувь)
-    const winRate = closedTrades.length > 0 ? ((winCount / closedTrades.
+    const winRate = closedTrades.length > 0 ? ((winCount / closedTrades.length) * 100).toFixed(1) : '0';
+
+    // Нийт ашиг, алдагдал тооцоолох
+    let netProfit = 0;
+    let totalGain = 0;
+    let totalLoss = 0;
+
+    for (let i = 0; i < tradesArray.length; i++) {
+        netProfit += tradesArray[i].pnl;
+        if (tradesArray[i].status === 'WIN') {
+            totalGain += tradesArray[i].pnl;
+        } else if (tradesArray[i].status === 'LOSS') {
+            totalLoss += Math.abs(tradesArray[i].pnl);
+        }
+    }
+
+    let profitFactor = '1.00';
+    if (totalLoss > 0) {
+        profitFactor = (totalGain / totalLoss).toFixed(2);
+    } else if (totalGain > 0) {
+        profitFactor = 'MAX';
+    }
+
+    // Шилдэг хос олох
+    const pairCount = {};
+    wins.forEach(function(t) {
+        pairCount[t.instrument] = (pairCount[t.instrument] || 0) + 1;
+    });
+    let bestPair = '--';
+    let maxWins = 0;
+    for (const pair in pairCount) {
+        if (pairCount[pair] > maxWins) {
+            maxWins = pairCount[pair];
+            bestPair = pair;
+        }
+    }
+
+    // Дэлгэц дээрх статистикийг шинэчлэх
+    setElementText('statsWinRate', winRate + '%');
+    setElementText('statsWinCount', winCount + 'W / ' + lossCount + 'L');
+    setElementText('statsNetProfit', (netProfit >= 0 ? '+' : '') + '$' + netProfit.toFixed(2));
+    setElementText('statsTotalTrades', totalTrades);
+    setElementText('statsActiveCount', openTrades.length + ' Нээлттэй');
+    setElementText('statsBestPair', bestPair);
+    setElementText('statsProfitFactor', profitFactor);
+
+    // Чансаа болон Зэрэглэл хүснэгтийг шинэчлэх
+    updateLeaderboard(closedTrades, netProfit, winRate);
+    updateTiers(closedTrades, netProfit, winRate);
+}
+window.updateAnalytics = updateAnalytics;
+
+// Зэрэглэл (Tiers) шинэчлэх функц
+function updateTiers(closedTrades, netProfit, winRate) {
+    const closedCount = closedTrades.length;
+    const wr = parseFloat(winRate) || 0;
+
+    let currentRank = 'Хүрэл';
+    let currentBadgeClass = 'badge-bronze';
+    let nextTarget = 'Дараагийн: Мөнгөн';
+    let profitNeeded = 'Зорилт: $1,000.00';
+    let wrNeeded = 'Зорилт: 50%';
+    let tradesNeeded = 'Зорилт: 10';
+
+    const isSilver = netProfit >= 1000 && wr >= 50 && closedCount >= 10;
+    const isGold = netProfit >= 3000 && wr >= 55 && closedCount >= 25;
+    const isPlatinum = netProfit >= 10000 && wr >= 60 && closedCount >= 50;
+    const isDiamond = netProfit >= 25000 && wr >= 65 && closedCount >= 100;
+
+    if (isDiamond) {
+        currentRank = 'Алмаз';
+        currentBadgeClass = 'badge-diamond';
+        nextTarget = 'Дээд түвшин';
+        profitNeeded = 'Хүрсэн';
+        wrNeeded = 'Хүрсэн';
+        tradesNeeded = 'Хүрсэн';
+    } else if (isPlatinum) {
+        currentRank = 'Платинум';
+        currentBadgeClass = 'badge-platinum';
+        nextTarget = 'Дараагийн: Алмаз';
+        profitNeeded = 'Зорилт: $25,000.00';
+        wrNeeded = 'Зорилт: 65%';
+        tradesNeeded = 'Зорилт: 100';
+    } else if (isGold) {
+        currentRank = 'Алтан';
+        currentBadgeClass = 'badge-gold';
+  
