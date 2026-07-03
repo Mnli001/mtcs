@@ -490,4 +490,71 @@ window.clearAllTrades = function() {
         if (window.supabaseClient) {
             window.supabaseClient.auth.getSession().then(function(res) {
                 const session = res.data ? res.data.session : null;
-           
+                if (session && session.user) {
+                    window.supabaseClient.from('trades').delete().eq('user_id', session.user.id).then(function() {
+                        console.log('Бүх арилжааг Supabase-ээс цэвэрлэлээ.');
+                    }).catch(function(e) {
+                        console.warn('Delete trades warning:', e);
+                    });
+                }
+            });
+        }
+    }
+};
+
+// Тэмдэглэлийн хүснэгтийг зурах функц
+function renderJournalTable() {
+    const tbody = document.getElementById('journalTableBody');
+    if (!tbody) return;
+
+    if (tradesArray.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2.5rem; color: #737373;">Бүртгэлгүй.</td></tr>';
+        return;
+    }
+
+    let html = '';
+    for (let i = 0; i < tradesArray.length; i++) {
+        const t = tradesArray[i];
+        let statusBadge = '<span class="badge badge-open">Нээлттэй</span>';
+        let actionButtons = '<button class="btn-action-win" onclick="closeTrade(' + t.id + ', \'WIN\')">WIN</button>' +
+                            '<button class="btn-action-loss" onclick="closeTrade(' + t.id + ', \'LOSS\')">LOSS</button>';
+
+        if (t.status === 'WIN') {
+            statusBadge = '<span class="badge badge-win">WIN (+$' + t.pnl.toFixed(2) + ')</span>';
+            actionButtons = '<strong>+$' + t.pnl.toFixed(2) + '</strong>';
+        } else if (t.status === 'LOSS') {
+            statusBadge = '<span class="badge badge-loss">LOSS (-$' + Math.abs(t.pnl).toFixed(2) + ')</span>';
+            actionButtons = '<strong>-$' + Math.abs(t.pnl).toFixed(2) + '</strong>';
+        }
+
+        html += '<tr>' +
+            '<td>' + t.date + '</td>' +
+            '<td><strong>' + t.instrument + '</strong></td>' +
+            '<td><strong>' + t.direction + '</strong></td>' +
+            '<td>' + t.entryPrice + '</td>' +
+            '<td><strong>' + t.lotSize + '</strong></td>' +
+            '<td>-$' + t.riskAmount.toFixed(2) + '</td>' +
+            '<td>' + statusBadge + '</td>' +
+            '<td>' + actionButtons + '</td>' +
+        '</tr>';
+    }
+
+    tbody.innerHTML = html;
+}
+window.renderJournalTable = renderJournalTable;
+
+// ==========================================================================
+// 7. СТАТИСТИК БА АНАЛИЗ (Win Rate, Нийт Ашиг, Чансаа)
+// ==========================================================================
+function updateAnalytics() {
+    const totalTrades = tradesArray.length;
+    const closedTrades = tradesArray.filter(function(t) { return t.status !== 'OPEN'; });
+    const openTrades = tradesArray.filter(function(t) { return t.status === 'OPEN'; });
+    const wins = tradesArray.filter(function(t) { return t.status === 'WIN'; });
+    const losses = tradesArray.filter(function(t) { return t.status === 'LOSS'; });
+
+    const winCount = wins.length;
+    const lossCount = losses.length;
+
+    // Win Rate (Хожлын хувь)
+    const winRate = closedTrades.length > 0 ? ((winCount / closedTrades.
