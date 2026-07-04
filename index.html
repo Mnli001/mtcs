@@ -396,7 +396,91 @@
             </div>
         </section>
 
-        
+        <!-- 7. ЗЭРЭГЛЭЛ (Tiers Tab) -->
+        <section id="view-zereglel" class="view-section hidden">
+            <div class="section-header-box">
+                <h3 class="box-title">Зэрэглэл</h3>
+            </div>
+
+            <!-- Одоогийн зэрэглэлийн статистик 4 карт -->
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Одоогийн зэрэглэл</div>
+                    <div class="stat-val" id="tierCurrentName">Хүрэл</div>
+                    <div class="stat-sub" id="tierNextTarget">Дараагийн: Мөнгөн</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Цэвэр ашиг</div>
+                    <div class="stat-val" id="tierNetProfit">$0.00</div>
+                    <div class="stat-sub" id="tierProfitNeeded">Зорилт: $1,000.00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Win Rate</div>
+                    <div class="stat-val" id="tierWinRate">0%</div>
+                    <div class="stat-sub" id="tierWinRateNeeded">Зорилт: 50%</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Хаасан арилжаа</div>
+                    <div class="stat-val" id="tierTradesCount">0</div>
+                    <div class="stat-sub" id="tierTradesNeeded">Зорилт: 10</div>
+                </div>
+            </div>
+
+            <!-- Зэрэглэлийн шаардлагын хүснэгт -->
+            <div class="table-responsive">
+                <table class="standard-table">
+                    <thead>
+                        <tr>
+                            <th>Зэрэглэл</th>
+                            <th>Шаардлагатай ашиг</th>
+                            <th>Win Rate</th>
+                            <th>Арилжааны тоо</th>
+                            <th>Төлөв</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tierTableBody">
+                        <tr id="rowTierBronze">
+                            <td><span class="badge badge-bronze">Хүрэл</span></td>
+                            <td>$0+</td>
+                            <td>--</td>
+                            <td>1+</td>
+                            <td><span class="badge badge-win">Хүрсэн</span></td>
+                        </tr>
+                        <tr id="rowTierSilver">
+                            <td><span class="badge badge-silver">Мөнгөн</span></td>
+                            <td>+$1,000.00</td>
+                            <td>50%+</td>
+                            <td>10+</td>
+                            <td id="statusTierSilver"><span class="badge badge-loss">Түгжээтэй</span></td>
+                        </tr>
+                        <tr id="rowTierGold">
+                            <td><span class="badge badge-gold">Алтан</span></td>
+                            <td>+$3,000.00</td>
+                            <td>55%+</td>
+                            <td>25+</td>
+                            <td id="statusTierGold"><span class="badge badge-loss">Түгжээтэй</span></td>
+                        </tr>
+                        <tr id="rowTierPlatinum">
+                            <td><span class="badge badge-platinum">Платинум</span></td>
+                            <td>+$10,000.00</td>
+                            <td>60%+</td>
+                            <td>50+</td>
+                            <td id="statusTierPlatinum"><span class="badge badge-loss">Түгжээтэй</span></td>
+                        </tr>
+                        <tr id="rowTierDiamond">
+                            <td><span class="badge badge-diamond">Алмаз</span></td>
+                            <td>+$25,000.00</td>
+                            <td>65%+</td>
+                            <td>100+</td>
+                            <td id="statusTierDiamond"><span class="badge badge-loss">Түгжээтэй</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    
     </div>
 </body>
 </html>
