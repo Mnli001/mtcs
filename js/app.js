@@ -643,4 +643,80 @@ function updateTiers(closedTrades, netProfit, winRate) {
     } else if (isGold) {
         currentRank = 'Алтан';
         currentBadgeClass = 'badge-gold';
-  
+        nextTarget = 'Дараагийн: Платинум';
+        profitNeeded = 'Зорилт: $10,000.00';
+        wrNeeded = 'Зорилт: 60%';
+        tradesNeeded = 'Зорилт: 50';
+    } else if (isSilver) {
+        currentRank = 'Мөнгөн';
+        currentBadgeClass = 'badge-silver';
+        nextTarget = 'Дараагийн: Алтан';
+        profitNeeded = 'Зорилт: $3,000.00';
+        wrNeeded = 'Зорилт: 55%';
+        tradesNeeded = 'Зорилт: 25';
+    }
+
+    // Хэрэглэгчийн нэрний доорх зэрэглэлийн тэмдэглэгээг шинэчлэх
+    const headerRank = document.getElementById('headerUserRank');
+    if (headerRank) {
+        headerRank.textContent = currentRank;
+        headerRank.className = 'user-rank badge ' + currentBadgeClass;
+    }
+
+    setElementText('tierCurrentName', currentRank);
+    setElementText('tierNextTarget', nextTarget);
+    setElementText('tierNetProfit', (netProfit >= 0 ? '+' : '') + '$' + netProfit.toFixed(2));
+    setElementText('tierProfitNeeded', profitNeeded);
+    setElementText('tierWinRate', winRate + '%');
+    setElementText('tierWinRateNeeded', wrNeeded);
+    setElementText('tierTradesCount', closedCount);
+    setElementText('tierTradesNeeded', tradesNeeded);
+
+    const setTierStatus = function(id, reached) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.innerHTML = reached
+                ? '<span class="badge badge-win">Хүрсэн</span>'
+                : '<span class="badge badge-loss">Түгжээтэй</span>';
+        }
+    };
+
+    setTierStatus('statusTierSilver', isSilver || isGold || isPlatinum || isDiamond);
+    setTierStatus('statusTierGold', isGold || isPlatinum || isDiamond);
+    setTierStatus('statusTierPlatinum', isPlatinum || isDiamond);
+    setTierStatus('statusTierDiamond', isDiamond);
+}
+
+// ==========================================================================
+// ЧАНСАА (Leaderboard) — Зөвхөн Supabase дээр бүртгэлтэй бодит хэрэглэгчид
+// ==========================================================================
+function getBadgeClassForRank(rankName) {
+    if (rankName === 'Алмаз') return 'badge-diamond';
+    if (rankName === 'Платинум') return 'badge-platinum';
+    if (rankName === 'Алтан') return 'badge-gold';
+    if (rankName === 'Мөнгөн') return 'badge-silver';
+    return 'badge-bronze';
+}
+
+function updateLeaderboard(closedTrades, netProfit, winRate) {
+    const tbody = document.getElementById('leaderboardTableBody');
+    if (!tbody) return;
+
+    // Одоогийн хэрэглэгчийн мэдээлэл
+    let currentUserId = null;
+    let currentUserEmail = null;
+    let currentDisplayName = 'Зочин';
+
+    try {
+        const localUserStr = localStorage.getItem('mtcs_user');
+        if (localUserStr) {
+            const u = JSON.parse(localUserStr);
+            if (u) {
+                currentUserId = u.id;
+                currentUserEmail = u.email;
+                currentDisplayName = (u.user_metadata && u.user_metadata.display_name) || (u.email ? u.email.split('@')[0] : 'Трейдер');
+            }
+        }
+    } catch(e) {}
+
+    const
