@@ -719,4 +719,105 @@ function updateLeaderboard(closedTrades, netProfit, winRate) {
         }
     } catch(e) {}
 
-    const
+    const userNameEl = document.querySelector('.user-name');
+    if (userNameEl && userNameEl.textContent.trim()) {
+        currentDisplayName = userNameEl.textContent.trim();
+    }
+
+    // Одоогийн хэрэглэгчийн зэрэглэл бодох
+    const closedCount = closedTrades ? closedTrades.length : 0;
+    const wr = parseFloat(winRate) || 0;
+    const profitVal = parseFloat(netProfit) || 0;
+
+    let userRank = 'Хүрэл';
+    let userBadge = 'badge-bronze';
+    if (profitVal >= 25000 && wr >= 65 && closedCount >= 100) {
+        userRank = 'Алмаз';
+        userBadge = 'badge-diamond';
+    } else if (profitVal >= 10000 && wr >= 60 && closedCount >= 50) {
+        userRank = 'Платинум';
+        userBadge = 'badge-platinum';
+    } else if (profitVal >= 3000 && wr >= 55 && closedCount >= 25) {
+        userRank = 'Алтан';
+        userBadge = 'badge-gold';
+    } else if (profitVal >= 1000 && wr >= 50 && closedCount >= 10) {
+        userRank = 'Мөнгөн';
+        userBadge = 'badge-silver';
+    }
+
+    // Дундаж R:R бодох
+    let avgRR = '1:2.0';
+    if (closedTrades && closedTrades.length > 0) {
+        let totalRR = 0;
+        let countRR = 0;
+        closedTrades.forEach(function(t) {
+            if (t.riskAmount > 0 && t.targetProfit > 0) {
+                totalRR += (t.targetProfit / t.riskAmount);
+                countRR++;
+            }
+        });
+        if (countRR > 0) {
+            avgRR = '1:' + (totalRR / countRR).toFixed(1);
+        }
+    }
+
+    const currentUserRow = {
+        id: currentUserId,
+        email: currentUserEmail,
+        name: currentDisplayName,
+        rank: userRank,
+        badge: userBadge,
+        winRate: wr,
+        rr: avgRR,
+        profit: profitVal,
+        isCurrent: true
+    };
+
+    // Хэрэв Supabase холбогдсон бол зөвхөн Supabase дээрх бодит хэрэглэгчдийг унших
+    if (window.supabaseClient) {
+        Promise.all([
+            window.supabaseClient.from('users').select('*'),
+            window.supabaseClient.from('trades').select('*')
+        ]).then(function(results) {
+            const usersRes = results[0];
+            const tradesRes = results[1];
+            const dbUsers = (usersRes && usersRes.data) ? usersRes.data : [];
+            const dbTrades = (tradesRes && tradesRes.data) ? tradesRes.data : [];
+
+            let list = [];
+            let currentUserIncluded = false;
+
+            dbUsers.forEach(function(u) {
+                const isCurrent = (currentUserId && u.id === currentUserId) ||
+                                  (currentUserEmail && u.email && u.email.toLowerCase() === currentUserEmail.toLowerCase()) ||
+                                  (currentDisplayName && u.display_name && u.display_name.toLowerCase() === currentDisplayName.toLowerCase());
+
+                if (isCurrent) {
+                    list.push(currentUserRow);
+                    currentUserIncluded = true;
+                } else {
+                    // Тухайн хэрэглэгчийн арилжааны статистикийг тооцоолох
+                    const uTrades = dbTrades.filter(function(t) {
+                        return t.user_id === u.id && t.status !== 'OPEN';
+                    });
+
+                    let uProfit = 0;
+                    let uWins = 0;
+                    let uTotalRR = 0;
+                    let uCountRR = 0;
+
+                    uTrades.forEach(function(t) {
+                        uProfit += (Number(t.pnl) || 0);
+                        if (t.status === 'WIN') uWins++;
+                        if (t.risk_amount > 0 && t.target_profit > 0) {
+                            uTotalRR += (Number(t.target_profit) / Number(t.risk_amount));
+                            uCountRR++;
+                        }
+                    });
+
+                    const uCount = uTrades.length;
+                    const uWr = uCount > 0 ? Math.round((uWins / uCount) * 100) : 0;
+                    const uAvgRR = uCountRR > 0 ? '1:' + (uTotalRR / uCountRR).toFixed(1) : '1:2.0';
+
+                    let uRank = 'Хүрэл';
+                    let uBadge = 'ba
