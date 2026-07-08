@@ -889,4 +889,89 @@ function renderLeaderboardRows(list) {
             '<td><span class="badge ' + trader.badge + '">' + trader.rank + '</span></td>' +
             '<td>' + trader.winRate + '%</td>' +
             '<td>' + trader.rr + '</td>' +
-            '<td st
+            '<td style="font-weight: bold; color: ' + profitColor + ';">' + formattedProfit + '</td>' +
+        '</tr>';
+    });
+
+    tbody.innerHTML = html;
+}
+
+// ==========================================================================
+// 8. ӨСӨЛТИЙН ГРАФИК ЗУРАХ (Chart.js болон Canvas Fallback)
+// ==========================================================================
+window.renderEquityChart = function() {
+    const canvas = document.getElementById('equityChartCanvas');
+    if (!canvas) return;
+
+    const balanceInput = document.getElementById('accountBalance');
+    const startBalance = parseFloat(balanceInput ? balanceInput.value : 10000) || 10000;
+
+    // Арилжаануудыг хуучнаас нь эхлэн эрэмбэлэх
+    const closedTrades = [...tradesArray].reverse().filter(function(t) { return t.status !== 'OPEN'; });
+
+    const labels = ['Эхлэл'];
+    const dataPoints = [startBalance];
+    let runningBalance = startBalance;
+
+    for (let i = 0; i < closedTrades.length; i++) {
+        runningBalance += closedTrades[i].pnl;
+        labels.push('#' + (i + 1) + ' (' + closedTrades[i].instrument + ')');
+        dataPoints.push(runningBalance);
+    }
+
+    // Chart.js номын сангаар график зурах
+    if (window.Chart) {
+        if (equityChartInstance) {
+            equityChartInstance.destroy();
+        }
+
+        const ctx = canvas.getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.08)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
+
+        equityChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Данс ($)',
+                    data: dataPoints,
+                    borderColor: '#000000',
+                    backgroundColor: gradient,
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.25,
+                    pointBackgroundColor: '#000000',
+                    pointBorderColor: '#ffffff',
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(0, 0, 0, 0.06)' },
+                        ticks: { color: '#525252' }
+                    },
+                    y: {
+                        grid: { color: 'rgba(0, 0, 0, 0.06)' },
+                        ticks: {
+                            color: '#525252',
+                            callback: function(val) { return '$' + val.toLocaleString(); }
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        drawCanvasFallback(canvas, dataPoints);
+    }
+};
+
+function drawCanvasFallback(canvas, data) {
+    const ctx = canvas.getContext('2d
