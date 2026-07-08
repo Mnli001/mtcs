@@ -820,4 +820,73 @@ function updateLeaderboard(closedTrades, netProfit, winRate) {
                     const uAvgRR = uCountRR > 0 ? '1:' + (uTotalRR / uCountRR).toFixed(1) : '1:2.0';
 
                     let uRank = 'Хүрэл';
-                    let uBadge = 'ba
+                    let uBadge = 'badge-bronze';
+                    if (uProfit >= 25000 && uWr >= 65 && uCount >= 100) {
+                        uRank = 'Алмаз'; uBadge = 'badge-diamond';
+                    } else if (uProfit >= 10000 && uWr >= 60 && uCount >= 50) {
+                        uRank = 'Платинум'; uBadge = 'badge-platinum';
+                    } else if (uProfit >= 3000 && uWr >= 55 && uCount >= 25) {
+                        uRank = 'Алтан'; uBadge = 'badge-gold';
+                    } else if (uProfit >= 1000 && uWr >= 50 && uCount >= 10) {
+                        uRank = 'Мөнгөн'; uBadge = 'badge-silver';
+                    }
+
+                    list.push({
+                        id: u.id,
+                        email: u.email,
+                        name: u.display_name || (u.email ? u.email.split('@')[0] : 'Трейдер'),
+                        rank: uRank,
+                        badge: uBadge,
+                        winRate: uWr,
+                        rr: uAvgRR,
+                        profit: uProfit,
+                        isCurrent: false
+                    });
+                }
+            });
+
+            // Хэрэв одоогийн хэрэглэгч Supabase хүснэгтэд ороогүй байвал нэмэх
+            if (!currentUserIncluded) {
+                list.push(currentUserRow);
+            }
+
+            // Ашгаар ихээс бага руу эрэмбэлэх
+            list.sort(function(a, b) {
+                return b.profit - a.profit;
+            });
+
+            renderLeaderboardRows(list);
+        }).catch(function(e) {
+            console.warn("Leaderboard Supabase load warning:", e);
+            renderLeaderboardRows([currentUserRow]);
+        });
+    } else {
+        renderLeaderboardRows([currentUserRow]);
+    }
+}
+
+function renderLeaderboardRows(list) {
+    const tbody = document.getElementById('leaderboardTableBody');
+    if (!tbody) return;
+
+    if (!list || list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2.5rem; color: #737373;">Бүртгэлтэй хэрэглэгч байхгүй байна.</td></tr>';
+        return;
+    }
+
+    let html = '';
+    list.forEach(function(trader, index) {
+        const rankPos = index + 1;
+        const isSelf = trader.isCurrent;
+        const rowClass = isSelf ? ' class="tr-current-user"' : '';
+        const nameText = isSelf ? '<strong>' + trader.name + ' (Та)</strong>' : '<strong>' + trader.name + '</strong>';
+        const formattedProfit = (trader.profit >= 0 ? '+' : '') + '$' + trader.profit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const profitColor = trader.profit > 0 ? '#137333' : (trader.profit < 0 ? '#c5221f' : '#000000');
+
+        html += '<tr' + rowClass + '>' +
+            '<td><strong>' + rankPos + '</strong></td>' +
+            '<td>' + nameText + '</td>' +
+            '<td><span class="badge ' + trader.badge + '">' + trader.rank + '</span></td>' +
+            '<td>' + trader.winRate + '%</td>' +
+            '<td>' + trader.rr + '</td>' +
+            '<td st
