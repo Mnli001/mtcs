@@ -974,4 +974,88 @@ window.renderEquityChart = function() {
 };
 
 function drawCanvasFallback(canvas, data) {
-    const ctx = canvas.getContext('2d
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width = canvas.parentElement.clientWidth || 600;
+    const height = canvas.height = 200;
+
+    ctx.clearRect(0, 0, width, height);
+
+    if (data.length < 2) {
+        ctx.fillStyle = '#737373';
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Бүртгэлгүй.', width / 2, height / 2);
+        return;
+    }
+
+    const min = Math.min(...data) * 0.98;
+    const max = Math.max(...data) * 1.02;
+    const stepX = width / (data.length - 1);
+
+    ctx.beginPath();
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
+
+    data.forEach(function(val, i) {
+        const x = i * stepX;
+        const y = height - ((val - min) / (max - min)) * (height - 30) - 15;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+}
+
+// ==========================================================================
+// 9. LOCALSTORAGE ХАДГАЛАЛТ (Хэрэглэгч тус бүрээр тусгаарлах)
+// ==========================================================================
+function getTradeStorageKey(userId) {
+    if (userId) {
+        return 'mtcs_trades_' + userId;
+    }
+    try {
+        const localUser = localStorage.getItem('mtcs_user');
+        if (localUser) {
+            const u = JSON.parse(localUser);
+            if (u && (u.id || u.email)) {
+                return 'mtcs_trades_' + (u.id || u.email);
+            }
+        }
+    } catch (e) {}
+    return 'mtcs_trades_guest';
+}
+
+function saveTradesToStorage(userId) {
+    try {
+        const key = getTradeStorageKey(userId);
+        localStorage.setItem(key, JSON.stringify(tradesArray));
+    } catch (e) {
+        console.error('Хадгалахад алдаа гарлаа:', e);
+    }
+}
+
+window.loadTradesFromStorage = function(userId) {
+    try {
+        const key = getTradeStorageKey(userId);
+        const stored = localStorage.getItem(key);
+        if (stored) {
+            tradesArray = JSON.parse(stored) || [];
+        } else {
+            tradesArray = [];
+        }
+        window.tradesArray = tradesArray;
+        renderJournalTable();
+        updateAnalytics();
+        renderEquityChart();
+    } catch (e) {
+        console.error('Уншихад алдаа гарлаа:', e);
+    }
+};
+
+window.setTradesArray = function(newArr, userId) {
+    tradesArray = newArr || [];
+    window.tradesArray = tradesArray;
+    saveTradesToStorage(userId);
+    renderJournalTable();
+    updateAnalytics();
+    renderEquityChart();
+};
